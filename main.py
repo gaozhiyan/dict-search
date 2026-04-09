@@ -21,6 +21,8 @@ async def read_index():
         return f.read()
 
 @app.post("/api/upload")
+@app.post("/.netlify/functions/api/upload")
+@app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     if not file.filename.endswith(".txt"):
         raise HTTPException(status_code=400, detail="Only .txt files are allowed")
