@@ -88,17 +88,19 @@
         async function uploadFile() {
             if (!selectedFile) return;
 
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('results').innerHTML = '';
             document.getElementById('upload-btn').disabled = true;
 
             try {
+                const text = await selectedFile.text();
+                
                 const response = await fetch('/api/upload', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
                 });
 
                 if (!response.ok) {
