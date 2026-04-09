@@ -1,68 +1,83 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-import scraper
-import os
-import sys
-import webbrowser
-import threading
-import time
-import re
+import traceback
 
-app = FastAPI()
+try:
+    from fastapi import FastAPI, UploadFile, File, HTTPException
+    from fastapi.responses import HTMLResponse
+    from fastapi.staticfiles import StaticFiles
+    from pydantic import BaseModel
+    import scraper
+    import os
+    import sys
+    import webbrowser
+    import threading
+    import time
+    import re
+    import urllib.request
 
-# Determine base path for PyInstaller
-if getattr(sys, 'frozen', False):
-    base_path = sys._MEIPASS
-else:
-    base_path = os.path.dirname(os.path.abspath(__file__))
+    app = FastAPI()
 
-static_dir = os.path.join(base_path, "static")
+    # Determine base path for PyInstaller
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
 
-# Mount static files
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    static_dir = os.path.join(base_path, "static")
 
-@app.get("/", response_class=HTMLResponse)
-async def read_index():
-    with open(os.path.join(static_dir, "index.html"), "r", encoding="utf-8") as f:
-        return f.read()
+    # Mount static files
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-@app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
-    if not file.filename.endswith(".txt"):
-        raise HTTPException(status_code=400, detail="Only .txt files are allowed")
-    
-    content = await file.read()
-    text = content.decode("utf-8")
-    
-    # Extract words (simple splitting by whitespace)
-    words = re.findall(r'\b[a-zA-Z-]+\b', text)
-    
-    # Remove duplicates and keep order
-    seen = set()
-    unique_words = []
-    for w in words:
-        w_lower = w.lower()
-        if w_lower not in seen:
-            seen.add(w_lower)
-            unique_words.append(w_lower)
-            
-    # Process words sequentially to avoid overwhelming the server
-    results = []
-    for word in unique_words:
-        info = scraper.get_word_info(word)
-        results.append(info)
+    @app.get("/", response_class=HTMLResponse)
+    async def read_index():
+        with open(os.path.join(static_dir, "index.html"), "r", encoding="utf-8") as f:
+            return f.read()
+
+    @app.post("/api/upload")
+    async def upload_file(file: UploadFile = File(...)):
+        if not file.filename.endswith(".txt"):
+            raise HTTPException(status_code=400, detail="Only .txt files are allowed")
         
-    return {"results": results}
+        content = await file.read()
+        text = content.decode("utf-8")
+        
+        # Extract words (simple splitting by whitespace)
+        words = re.findall(r'\b[a-zA-Z-]+\b', text)
+        
+        # Remove duplicates and keep order
+        seen = set()
+        unique_words = []
+        for w in words:
+            w_lower = w.lower()
+            if w_lower not in seen:
+                seen.add(w_lower)
+                unique_words.append(w_lower)
+                
+        # Process words sequentially to avoid overwhelming the server
+        results = []
+        for word in unique_words:
+            info = scraper.get_word_info(word)
+            results.append(info)
+            
+        return {"results": results}
 
-def open_browser():
-    time.sleep(1.5) # Wait for uvicorn to start
-    webbrowser.open("http://127.0.0.1:8000")
+    def open_browser():
+        # Wait until the server is actually up before opening the browser
+        for _ in range(15):
+            try:
+                urllib.request.urlopen("http://127.0.0.1:8000")
+                break
+            except:
+                time.sleep(1)
+        webbrowser.open("http://127.0.0.1:8000")
 
-if __name__ == "__main__":
-    import uvicorn
-    # Start browser opening thread
-    threading.Thread(target=open_browser, daemon=True).start()
-    # Run server
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    if __name__ == "__main__":
+        import uvicorn
+        # Start browser opening thread
+        threading.Thread(target=open_browser, daemon=True).start()
+        # Run server
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+
+except Exception as e:
+    print("An error occurred:")
+    traceback.print_exc()
+    input("\nPress Enter to exit...")
