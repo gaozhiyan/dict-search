@@ -6,3 +6,4 @@ dist/
 *.spec
 .DS_Store
 github_folder_for_upload/
+node_modules
