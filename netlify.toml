@@ -1,6 +1,7 @@
 [build]
-  command = "echo 'No build command needed for this Python API'"
+  command = "pip install -r requirements.txt"
   publish = "static"
+  functions = "netlify/functions"
 
 [functions]
   included_files = ["main.py", "scraper.py"]

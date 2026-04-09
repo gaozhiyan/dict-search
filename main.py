@@ -15,12 +15,13 @@ static_dir = os.path.join(base_path, "static")
 # Mount static files
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-@app.get("/", response_class=HTMLResponse)
-async def read_index():
-    with open(os.path.join(static_dir, "index.html"), "r", encoding="utf-8") as f:
-        return f.read()
+@app.get("/test")
+@app.get("/api/test")
+@app.get("/.netlify/functions/api/test")
+async def test_route():
+    return {"message": "Hello from FastAPI!"}
 
-@app.post("/api/upload")
+
 @app.post("/.netlify/functions/api/upload")
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
@@ -49,4 +50,8 @@ async def upload_file(file: UploadFile = File(...)):
         results.append(info)
         
     return {"results": results}
+
+@app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def catch_all(path_name: str):
+    return {"message": f"Caught path: {path_name}"}
 
