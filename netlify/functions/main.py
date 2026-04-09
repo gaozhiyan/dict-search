@@ -14,6 +14,7 @@ async def test_route():
     return {"message": "Hello from FastAPI!"}
 
 
+@app.post("/api/upload")
 @app.post("/.netlify/functions/api/upload")
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
