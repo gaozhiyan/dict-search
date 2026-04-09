@@ -1,6 +1,4 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import scraper
 import os
@@ -8,12 +6,6 @@ import sys
 import re
 
 app = FastAPI()
-
-base_path = os.path.dirname(os.path.abspath(__file__))
-static_dir = os.path.join(base_path, "static")
-
-# Mount static files
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/test")
 @app.get("/api/test")
